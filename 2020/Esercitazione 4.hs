@@ -27,10 +27,13 @@ fibg n | n == 0 = 0
 
 
 -- A few functions with lists
+-- list of any typ
 myLength :: [a] -> Int
 myLength [] = 0
 myLength (_ : xs) = 1 + myLength xs
 
+
+;;++ is the concatenation
 myReverse :: [a] -> [a]
 myReverse [] = []
 myReverse (x:xs) = myReverse xs ++ [x]
@@ -52,6 +55,7 @@ rangeg a b | a > b = error "Min > Max"
            | otherwise = [a]
 
 -- List comprehensions
+-- Stampa tutti i possibili triangoli con questi constraint
 rightTriangles :: Integer -> [(Integer, Integer, Integer)]
 rightTriangles n = [(a, b, c) | a <- [1..n], b <- [1..a], c <- [1..b], a^2 == b^2 + c^2]
 
@@ -86,6 +90,7 @@ pack lst = reverse $ packAux lst [] []
           | otherwise = packAux (x:xs) [] (currPack:acc)
 
 -- Run-length encoding
+-- Semplice encoding delle liste con primo elemento e lunghezza della lista
 rencode :: Eq a => [a] -> [(a, Int)]
 rencode l = map encode $ pack l
   where encode p = (head p, length p)

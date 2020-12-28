@@ -3,11 +3,13 @@ module ES20201105 where
 -- Let's make some data types
 data RegionStatus = Yellow | Orange | Red
 
+-- Ora non sa mostrare questo tipo di dato, dobbiamo dirlo noi come fare
 instance Show RegionStatus where
   show Yellow = "Yellow region"
   show Orange = "Orange region"
   show Red = "Red region"
 
+--Stessa cosa per l'eq
 instance Eq RegionStatus where
   Yellow == Yellow = True
   Orange == Orange = True
@@ -41,7 +43,7 @@ distance p1 p2 = let dx = pointx p1 - pointx p2
                      dy = pointy p1 - pointy p2
                  in sqrt $ dx*dx + dy*dy
 
--- Some other ways of declaring it
+-- Some other ways of declaring it (PIÙ VELOCE, NON C'È BISOGNO DI DICHIARARE TUTTE LE FUNZIONI DI PRIMA)
 data APoint = APoint { apx :: Float, apy :: Float } deriving (Show, Eq)
 
 type TPoint = (Float, Float)
@@ -55,12 +57,15 @@ newtype NPoint = NPoint (Float, Float)
 
 
 -- Yet another binary tree
+-- Devono avere tutti lo stesso tipo "a"
 data BTree a = BEmpty | BNode a (BTree a) (BTree a)
 
+-- Qua stiamo dicendo che a deve essere una istanza di show, altrimenti (visto che può essere di qualsiasi tipo) non può essere mostrata e mostrs errore
 instance Show a => Show (BTree a) where
   show BEmpty = "Empty"
   show (BNode x BEmpty BEmpty) = "Leaf " ++ show x
   show (BNode x l r) = "Node " ++ show x ++ " [" ++ show l ++ "] [" ++ show r ++ "]"
+
 
 instance Eq a => Eq (BTree a) where
   BEmpty == BEmpty = True

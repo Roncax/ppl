@@ -1,10 +1,10 @@
 #lang racket
 
-;; Binary tree
+;; A binary tree
 (struct node-base
   ((value #:mutable)))
 
-(struct node node-base
+(struct node no4de-base
   (left right))
 
 (define (leaf v)
@@ -13,10 +13,8 @@
 (define (internal v l r)
   (node v l r))
 
-(define (leaf? n)
-  (and (node-base? n) (not (node? n))))
-
-(define foo (internal 3 (leaf 2) (leaf 1)))
+(define (leaf? t)
+  (and (node-base? t) (not (node? t))))
 
 (define (display-leaf l)
   (if (leaf? l)
@@ -24,7 +22,7 @@
         (display "[Leaf ")
         (display (node-base-value l))
         (display "]"))
-      (display "Not a leaf")))
+      (display "Not a leaf!")))
 
 (define (display-tree t)
   (cond [(leaf? t) (display-leaf t)]
@@ -36,7 +34,9 @@
                      (display " ")
                      (display-tree (node-right t))
                      (display "]"))]
-        [else (display "Not a tree")]))
+        [else (display "Not a tree!")]))
+
+(define foo (internal 1 (leaf 2) (leaf 3)))
 
 (define (tree-map f t)
   (if (leaf? t)
@@ -46,21 +46,17 @@
                 (tree-map f (node-right t)))))
 
 (define (tree-map! f t)
-  (begin
-    (set-node-base-value! t (f (node-base-value t)))
-    (when (node? t)
-      (begin
-        (tree-map! f (node-left t))
-        (tree-map! f (node-right t))))
-    t))
+  (set-node-base-value! t (f (node-base-value t)))
+  (unless (leaf? t)
+    (begin
+      (tree-map! f (node-left t))
+      (tree-map! f (node-right t))))
+  t)
 
-;; Let's try to define the ++ (increment) operator, like in C
+;; Let's try to define the ++ (increment) operator
 (define (++0 x)
-  (begin
-    (set! x (+ x 1))
-    x))
-
-(define a 1)
+  (set! x (+ x 1))
+  x)
 
 (define-syntax ++1
   (syntax-rules ()
@@ -69,17 +65,19 @@
        (set! x (+ x 1))
        x))))
 
-;; Now with multiple variables
-(define (+++0 x . remaining)
+(define a 1)
+
+;; Now for multiple variables
+(define (+++0 x . rest)
   (begin
     (++1 x)
-    (if (null? remaining)
+    (if (null? rest)
         (list x)
-        (cons x (apply +++0 remaining)))))
+        (cons x (apply +++0 rest)))))
 
 (define-syntax +++1
   (syntax-rules ()
-    ((_ x) ; (+++1 a)
+    ((_ x)
      (begin
        (++1 x)
        (list x)))
@@ -90,62 +88,55 @@
            (list x)
            (cons x (+++1 . rest)))))))
 
-(define b 2)
-(define c 3)
-(+++1 a b c)
-
 (define-syntax +++2
   (syntax-rules ()
-    ((_) ; (+++2)
+    ((_)
      '())
     ((_ x r ...)
      (begin
        (++1 x)
        (cons x (+++2 r ...))))))
 
+(define b 2)
+(define c 3)
 (+++2 a b c)
 
-;; Repeat-until like in Pascal
+;; Repeat-until à la Pascal
 (define-syntax repeat
   (syntax-rules (until)
     ((_ stmt ... until guard)
      (let loop ()
        (begin
-         stmt ...)
-       (unless guard (loop))))))
+         stmt ...
+         (unless guard (loop)))))))
 
 (let ((x 1))
-  (repeat (++1 x)
-          (display x)
-          (newline)
+  (repeat
+   (++1 x)
+   (display x)
+   (newline)
    until (> x 10)))
 
-
-;; Merge sort
-(define (merge l1 l2)
+;; To conclude, we finish our merge sort
+(define (merge pred l1 l2)
   (cond [(null? l1) l2]
         [(null? l2) l1]
-        [else (let ((f1 (car l1)) (f2 (car l2)))
-                (if (<= f1 f2)
-                    (cons f1 (merge (cdr l1) l2))
-                    (cons f2 (merge l1 (cdr l2)))))]))
-
-(define (merge-pred pred l1 l2)
-  (cond [(null? l1) l2]
-        [(null? l2) l1]
-        [else (let ((f1 (car l1)) (f2 (car l2)))
+        [else (let ((f1 (car l1))
+                    (f2 (car l2)))
                 (if (pred f1 f2)
-                    (cons f1 (merge-pred pred (cdr l1) l2))
-                    (cons f2 (merge-pred pred l1 (cdr l2)))))]))
+                    (cons f1 (merge pred (cdr l1) l2))
+                    (cons f2 (merge pred l1 (cdr l2)))))]))
 
 (define (half-split l)
-  (let ((mid (quotient (length l) 2)))
-  (cons (take l mid) (drop l mid))))
+  (if (null? l)
+      l
+      (let ((half (quotient (length l) 2)))
+        (cons (take l half) (drop l half)))))
 
 (define (merge-sort pred l)
   (cond [(null? l) l]
         [(null? (cdr l)) l]
         [else (let ((halves (half-split l)))
-                (merge-pred pred
-                            (merge-sort pred (car halves))
-                            (merge-sort pred (cdr halves))))]))
+                (merge pred
+                       (merge-sort pred (car halves))
+                       (merge-sort pred (cdr halves))))]))

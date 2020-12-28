@@ -2,7 +2,7 @@
 
 ;; A projection function
 (define (proj-f n . rest)
-  (list-ref rest n))
+  (lit-ref rest n))
 
 ;; Very slow if you call, e.g., (fibonacci 42)
 (define (fibonacci n)
@@ -38,12 +38,12 @@
 ;; A factorial generator
 (define gen-fact #f)
 (define (set-fact-gen)
-  (let ((f 1)
+  (let ((f 1) ;;variables to save 
         (n 1))
     (call/cc
-     (λ (cont)
-       (set! gen-fact cont)))
-    (set! f (* f n))
+     (λ (cont) 
+       (set! gen-fact cont))) ;; così dopo posso chiamare solo gen-fact per avviare la continuazione
+    (set! f (* f n)) ;; riprenderà da qua dopo la prima volta 
     (set! n (+ n 1))
     f))
 
@@ -57,7 +57,7 @@
    
 (define (count n)
   (let* ((i 0)
-        (mywhile (make-while (λ () (< i n)))))
+        (mywhile (make-while (λ () (< i n))))) ;; < i n è un guard di check per far partire o no la funzione
     (displayln i)
     (set! i (+ i 1))
     (mywhile)))
@@ -65,7 +65,7 @@
 ;; A break statement
 (define (break-negative l)
   (call/cc
-   (λ (break)
+   (λ (break) ;;dopo aver chiamato la continuazione arrivo qua
      (for-each (λ (x)
                  (if (>= x 0)
                      (displayln x)
@@ -75,7 +75,7 @@
 ;; A continue statement
 (define (skip-negative l)
   (for-each
-   (λ (x)
+   (λ (x) ;;salvare la continuazione  dichiarandola dopo la dichiarazione di questa funzione
      (call/cc
       (λ (continue)
         (if (>= x 0)
@@ -84,13 +84,14 @@
    l))
 
 ;; A while loop with break and continue
+;; Salvo 2 continuazioni, una prima l'esecuzione di tutto e una durante (continue)
 (define-syntax while-do
   (syntax-rules (do break: continue:)
     ((_ guard do stmt ... break: br-stmt continue: ct-stmt)
-     (call/cc
+     (call/cc ;; save the loop after the beginning of the loop
       (λ (br-stmt)
         (let loop ((guard-val (guard)))
-          (call/cc
+          (call/cc   ;; Se uso questa continuazione uso il continue
            (λ (ct-stmt)
              (when guard-val
                stmt ...)))

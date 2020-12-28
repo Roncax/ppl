@@ -9,6 +9,7 @@ data Logger a = Logger { content :: a
                        , log :: Log
                        }
 
+--non mi importa della parte log
 instance Eq a => Eq (Logger a) where
   l1 == l2 = content l1 == content l2
 
@@ -17,12 +18,14 @@ instance Show a => Show (Logger a) where
     ++ "\n\nLog:"
     ++ foldr (\line acc -> "\n\t" ++ line ++ acc) "" (log l)
 
+--per non violare una regola del functor
 instance Functor Logger where
   fmap f l = Logger (f $ content l) (log l)
 
 instance Applicative Logger where
   pure x = Logger x []
   (Logger f lf) <*> (Logger x lx) = Logger (f x) (lf ++ lx)
+
 
 instance Monad Logger where
   return = pure

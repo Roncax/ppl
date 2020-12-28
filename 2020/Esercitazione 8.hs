@@ -59,11 +59,13 @@ data CashRegister a = CashRegister { getReceipt :: (a, Float) } deriving (Show, 
 getCurrentItem = fst . getReceipt
 getPrice = snd . getReceipt
 
+-- derivato dal tipo della funzione fmap (almeno ora so di applicarla all'item
 instance Functor CashRegister where
   fmap f cr = CashRegister (f $ getCurrentItem cr, getPrice cr)
 
 --fmap :: (a -> b) -> CashRegister a -> CashRegister b
 
+--ANcora, guardando dalla definizione (sostituisco f con il nome del funtore)
 instance Applicative CashRegister where
   pure x = CashRegister (x, 0)
   crf <*> crx = CashRegister (getCurrentItem crf $ getCurrentItem crx, getPrice crf + getPrice crx)
@@ -121,6 +123,7 @@ stackManip s0 = let (s1, _) = pop s0
 -- put :: st -> State st ()
 -- get :: State st st
 
+-- STATE COMPUTATION
 popM :: State Stack Int
 popM = do
   stack <- get
