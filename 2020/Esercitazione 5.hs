@@ -60,7 +60,8 @@ newtype NPoint = NPoint (Float, Float)
 -- Devono avere tutti lo stesso tipo "a"
 data BTree a = BEmpty | BNode a (BTree a) (BTree a)
 
--- Qua stiamo dicendo che a deve essere una istanza di show, altrimenti (visto che può essere di qualsiasi tipo) non può essere mostrata e mostrs errore
+-- Qua stiamo dicendo che a deve essere una istanza di show, altrimenti 
+-- (visto che può essere di qualsiasi tipo) non può essere mostrata e nostro errore
 instance Show a => Show (BTree a) where
   show BEmpty = "Empty"
   show (BNode x BEmpty BEmpty) = "Leaf " ++ show x
