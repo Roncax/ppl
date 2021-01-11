@@ -196,3 +196,91 @@ x and y, and returns three lists: one containing all the elements that are less 
 containing all the elements in the range [x,y], the third one with all the elements bigger than both x and y. It
 is not possible to use the named let construct in the implementation.
 
+
+SOLUTION (mia)
+(define (tril L x y)
+	(let (l1 (list `()))
+		 (l2 (list `()))
+		 (l3 (list `())))
+	(foldr (lambda (el)
+			(cond ((and (> el y) (> el x)) (cons l1 el))
+				  ((and (< el y) (< el x)) (cons l3 el))
+				  ((and (< el y) (> el x)) (cons l2 el))))
+				  `() L))
+
+VERA SOLUZIONE (maaaaah)
+(define (3-part L v1 v2)
+ (define (3-p L v1 v2 r1 r2 r3)
+  (if (null? L)
+   (list r1 r2 r3)
+   (let ((x (car L))
+     (xs (cdr L)))
+    (cond
+     ((and (< x v1)(< x v2))
+      (3-p xs v1 v2 (cons x r1) r2 r3))
+     ((and (>= x v1)(<= x v2))
+      (3-p xs v1 v2 r1 (cons x r2) r3))
+     ((and (> x v1)(> x v2))
+      (3-p xs v1 v2 r1 r2 (cons x r3)))))))
+
+(3-p L v1 v2 '() '() '()))
+
+
+====2019.07.24====
+Consider this data definition in Haskell: data Tree a = Leaf a | Branch (Tree a) a (Tree a)
+Define an OO analogous of this data structure in Scheme using the technique of "closure as classes" as seen
+in class, defining the map and print methods, so that:
+
+(define t1 (Branch (Branch (Leaf 1) -1 (Leaf 2)) -2 (Leaf 3)))
+((t1 'map (lambda (x) (+ x 1))) 'print)
+
+should display: (Branch (Branch (Leaf 2) 0 (Leaf 3)) -1 (Leaf 4))
+
+SOLUTION
+(define (Branch t1 x t2)
+ (define (print)
+  (display "(Branch ")
+  (t1 'print)
+  (display " ")
+  (display x)
+  (display " ")
+  (t2 'print)
+  (display ")"))
+ (define (map f)
+  (Branch (t1 'map f) (f x) (t2 'map f)))
+(lambda (message . args)
+ (apply
+  (case message
+  ((print) print)
+  ((map) map)
+  (else (error "Unknown")))
+ args)))
+
+(define (Leaf x)
+ (define (print)
+  (display "(Leaf ")
+  (display x)
+  (display ")"))
+(define (map f)
+ (Leaf (f x)))
+(lambda (message . args)
+ (apply
+  (case message
+  ((print) print)
+  ((map) map)
+  (else (error "Unknown")))
+ args)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+

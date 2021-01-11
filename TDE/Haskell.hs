@@ -281,4 +281,60 @@ fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
 
 
 
+====2019.07.24====
+Consider a non-deterministic finite state automaton (NFSA) and assume that its states are values of a type
+State defined in some way. An NFSA is encoded in Haskell through three functions:
+
+i) transition :: Char → State → [State], i.e. the transition function.
+ii) end :: State → Bool, i.e. a functions stating if a state is an accepting state (True) or not.
+ii) start :: [State], which contains the list of starting states.
+
+1) Define a data type suitable to encode the configuration of an NSFA.
+2) Define the necessary functions (providing also all their types) that, given an automaton A (through
+transition, end, and start) and a string s, can be used to check if A accepts s or not.
+
+SOLUTION
+data Config = Config String [State] deriving (Show, Eq)
+
+steps :: (Char -> State -> [State]) -> Config -> Bool
+steps trans (Config "" confs) = not . null $ filter end confs
+steps trans (Config (a:as) confs) = steps trans $ Config as (concatMap (trans a) confs)
+
+
+====2019.07.24====
+1) Define a Tritree data structure, i.e. a tree where each node has at most 3 children, and every node contains
+a value.
+2) Make Tritree an instance of Foldable and Functor.
+3) Define a Tritree concatenation t1 +++ t2, where t2 is appended at the bottom-rightmost position of t1.
+4) Make Tritree an instance of Applicative
+
+SOLUTION
+data Tritree a = Node a (Tritree a) (Tritree a) (Tritree a) | Nil deriving (Show, Eq)
+
+instance Functor Tritree a where
+tmap f Nil = Nil
+tmap f (Tritree a x y z) = Node (f a) (tmap f x) (tmap f y) (tmap f z)
+
+instance Foldable Tritree a where
+foldr f i Nil = i
+tfoldr f i (Tritree a x y z) = f a (tfoldr f (tfoldr f (tfoldr f i z) y) x)
+
+x +++ Nil = x
+Nil +++ x = x
+(Tritree a1 x1 y1 z1) +++ t2 = Tritree a1 x1 y1 (z1 +++ t2)
+(Node a1 x y Nil) +++ t2 = Tritree x  y t2
+ 
+
+tconcat x = foldr (+++) (Tritree Nil Nil Nil) x
+
+instance Applicative Tritree a where
+ pure x = Tritree x Nil Nil Nil
+ fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
+
+
+
+
+
+
+
 
