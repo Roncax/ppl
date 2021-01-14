@@ -301,7 +301,7 @@ steps trans (Config "" confs) = not . null $ filter end confs
 steps trans (Config (a:as) confs) = steps trans $ Config as (concatMap (trans a) confs)
 
 
-====2019.07.24====
+====2019.06.28====
 1) Define a Tritree data structure, i.e. a tree where each node has at most 3 children, and every node contains
 a value.
 2) Make Tritree an instance of Foldable and Functor.
@@ -330,6 +330,56 @@ tconcat x = foldr (+++) (Tritree Nil Nil Nil) x
 instance Applicative Tritree a where
  pure x = Tritree x Nil Nil Nil
  fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
+
+
+====2019.02.08====
+We want to define a data structure, called BFlist (Back/Forward list), to define lists that can either be
+“forward” (like usual list, from left to right), or “backward”, i.e. going from right to left.
+
+We want to textually represent such lists with a plus or a minus before, to state their direction: e.g. +[1,2,3] is
+a forward list, -[1,2,3] is a backward list.
+Concatenation (let us call it <++>) for BFlist has this behavior: if both lists have the same direction, the
+returned list is the usual concatenation. Otherwise, forward and backward elements of the two lists delete
+each other, without considering their stored values.
+For instance: +[a,b,c] <++> -[d,e] is +[c], and -[a,b,c] <++> +[d,e] is -[c].
+
+1) Define a datatype for BFlist.
+2) Make BFList an instance of Eq and Show, having the representation presented above.
+3) Define <++>, i.e. concatenation for BFList.
+4) Make BFList an instance of Functor.
+5) Make BFList an instance of Foldable.
+6) Make BFList an instance of Applicative.
+
+
+SOLUTION
+data Dir = Fwd | Bwd deriving Eq
+data BFlist a = BFlist Dir [a] deriving Eq
+
+instance Show Dir where
+show Fwd = "+"
+show Bwd = "-"
+
+instance (Show a) => Show (BFlist a) where
+show BFlist dir list = (show dir) ++ (show list)
+
+(BFlist _ []) <++> x = x
+x <++> (BFlist _ []) = x
+(BFlist d1 x) <++> (BFlist d2 y) | d1 == d2 = BFlist d1 (x ++ y)
+(BFlist d1 (x:xs)) <++> (BFlist d2 (y:ys)) = (BFlist d1 xs) <++> (BFlist d2 ys)
+ 
+instance Functor BFlist a where
+fmap f (BFlist dir x) = BFlist dir (fmap f a)
+
+instance Foldable BFlist a where
+foldr  f i (BFlist dir a) = foldr f i a
+
+
+bconcat (BFlist dir x) = foldr (<++>) (BFlist dir []) (BFlist dir x)
+
+instance Applicative BFlist a where
+pure x = BFlist Fwd [x]
+ fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
+
 
 
 

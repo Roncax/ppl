@@ -217,7 +217,7 @@ splitmap(F, L, N) ->
 
 
 
-====2019.07.24====
+====2019.06.28====
 Define a master process which takes a list of nullary (or 0-arity) functions, and starts a worker process for
 each of them. The master must monitor all the workers and, if one fails for some reason, must re-start it to
 run the same code as before. The master ends when all the workers are done.
@@ -248,8 +248,6 @@ master_loop(Workers, Count) ->
 			master_loop(Workers#{Pid => Fun}, Count)
 	end.
 	
-
-
 
 
 
