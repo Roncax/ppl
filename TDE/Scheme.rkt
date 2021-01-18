@@ -299,6 +299,9 @@ SOLUTION
 ====2018.07.20===
 Give a purely functional definition of fep, which takes a list (x1 x2 ... xn) and returns (x1 (x2 (... (xn (x1 x2 ... xn) xn) xn-1) ...) x1).
 
+====2019.01.16====
+Define a pure function f with a variable number of arguments, that, when called like (f x1 x2 .. xn), returns:
+(xn (xn-1 ( .. (x1 (xn xn-1 .. x1))..). Function f must be defined using only fold operations for loops.
 SOLUTION
 (define (fep L)
 	(foldr (lambda (el next) (list el L el)) L L) )
@@ -309,3 +312,40 @@ c1 2
 c2 4
 c2 8
 c2 8
+
+SOLUTION
+(define (strg-fold.args)
+	(foldl (lambda (x y)
+			((list x y)))) (foldr (lambda (x y) 
+											(cons y x)) `() args) args))
+
+
+
+====2018.09.05====
+Define in a purely functional way a procedure called revlt, which takes three lists, (x1 ... xL) (y1 ... yM) (z1 .. zN)
+and returns the list of vectors: (#(xO yO zO) … #(x1 y1 z1)), where O ≥ 1 is the smallest among L, M, and N.
+E.g. (revlt '(1 2 3) '(4 5 6 7) '(8 9 10)) is the list '(#(3 6 10) #(2 5 9) #(1 4 8)).
+
+SOLUTION
+(define (revlt x y z) 
+	(define (revlt-help x y z L)
+		(if (or (eq? (size x) 0) (eq? (size y) 0) (eq? (size z) 0)))
+		(revlt-help (cdr x) (cdr y) (cdr z) (cons (#((car x) (car y) (car z)) L)))))
+
+
+REAL SOLUTION
+(define (revlt l1 l2 l3)
+(let loop ((p1 l1)
+(p2 l2)
+(p3 l3)
+(out '()))
+(if (or (null? p1)(null? p2)(null? p3))
+out
+(let ((x1 (car p1))
+(x2 (car p2))
+(x3 (car p3)))
+(loop (cdr p1) (cdr p2) (cdr p3)
+(cons (vector x1 x2 x3) out))))))
+
+
+
