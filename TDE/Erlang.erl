@@ -249,10 +249,58 @@ master_loop(Workers, Count) ->
 	end.
 	
 
+====2019.01.16====
+Define a process P, having a local behavior (a function), that answer to three commands:
+- load is used to load a new function f on P: the previous behavior is composed with f;
+- run is used to send some data D to P: P returns its behavior applied to D;
+- stop is used to stop P.
+For security reasons, the process must only work with messages coming from its creator: other messages
+must be discarded.
+
+SOLUTION
+cam(Beh, Who) ->
+	receive
+		{run, Who, What} ->
+			Who ! Beh(What),
+			cam(Beh, Who);
+		{load, Who, Code} ->
+			cam(fun (X) -> Code(Beh(X)) end, Who);
+		{stop, Who} ->
+			ok;
+		_ -> cam(Beh, Who)
+	end
 
 
 
+====2018.09.05====
+Define a function create_pipe, which takes a list of names and creates a process of each element of the list,
+each process registered as its name in the list; e.g. with [one, two], it creates two processes called ‘one’ and
+‘two’. The processes are “connected” (like in a list, there is the concept of “next process”) from the last to
+the first, e.g. with [one, two, three], the process structure is the following:
+three → two → one → self,
+this means that the next process of ‘three’ is ‘two’, and so on; self is the process that called create_pipe.
+Each process is a simple repeater, showing on the screen its name and the received message, then sends it to
+the next process.
+Each process ends after receiving the ‘kill’ message, unregistering itself.
 
+
+SOLUTION
+repeater(Next, Name) ->
+	receive
+		kill ->
+			unregister(Name),
+			Next ! kill;
+		V ->
+			io:format("~p got ~p~n", [Name, V]),
+			Next ! V,
+			repeater(Next, Name)
+	end.
+
+create_pipe([], End) -> End;
+create_pipe([X|Xs], Next) ->
+	P = spawn(?MODULE, repeater, [Next, X]),
+	register(X, P),
+	create_pipe(Xs, X).
 
 
 

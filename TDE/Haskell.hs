@@ -381,7 +381,66 @@ pure x = BFlist Fwd [x]
  fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
 
 
+====2019.01.16====
+We want to define a data structure, called Listree, to define structures working both as lists and as binary
+trees, like in the next figure.
+1) Define a datatype for Listree.
+2) Write the example of the figure with the defined data structure.
+3) Make Listree an instance of Functor.
+4) Make Listree an instance of Foldable.
+5) Make Listree an instance of Applicative
 
+SOLUTION
+data Listree a = Nil | Cons a (Listree a) | Branch (Listree a)(Listree a) deriving (Eq, Show)
+
+exfig = Branch (Cons 1 Nil) (Cons 2 (Branch (Branch (Cons 3 Nil) (Cons 4 Nil)) (Cons 5 (Cons 6 (Cons 7 Nil)))))
+
+instance Functor Listree a where
+fmap f Nil = Nil
+fmap f (Branch x y) = Branch (fmap f x) (fmap f y)
+fmap f (Cons a x) = Cons (f a) (fmap f x) 
+
+
+instance Foldable Listree a where
+foldr f i (Branch x y) = foldr f (foldr f i y) x
+foldr f i (Cons a y) = f (foldr f i y) a
+foldr f i Nil = i
+
+Branch x1 y1 <++> z = Branch x1 (y1 <++> z)
+Cons a z <++> x = Cons a (z <++> x)
+x <++> Nil = x
+Nil <++> x = x
+
+tconcat t = foldr (<++>) Nil t
+
+
+instance Applicative Listree a where
+pure x = (Cons x Nil)
+ fs <*> xs = tconcat $ tmap (\f -> tmap f xs) fs
+
+
+
+====2018.09.05====
+A “dual list”, or Dupl, is a pair of independent lists.
+1) Define a datatype for Dupl. Can it derive Show and/or Eq? If not, make Dupl an instance of both of them.
+2) Make Dupl an instance of Functor, Foldable, and Applicative.
+
+
+SOLUTION
+data Dupl a = Dupl [a] [a] deriving (Show, Eq)
+
+instance Functor Dupl where
+	fmap f (Dupl l r) = Dupl (fmap f l) (fmap f r)
+
+tfoldr :: (a -> b -> b) -> b -> (Dupl a) -> b
+tfoldr f i (Dupl l r) = foldr f i (l ++ r)
+
+instance Foldable Dupl where
+	foldr = tfoldr
+
+instance Applicative Dupl where
+	pure x = Dupl [x] []
+	(Dupl f1 f2) <*> (Dupl x1 x2) = Dupl (f1 <*> x1) (f2 <*> x2)
 
 
 
