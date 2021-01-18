@@ -383,8 +383,28 @@ pure x = BFlist Fwd [x]
 
 
 
+====2019.02.08====
+1) Consider the function fep of Exercise 1. We want to implement an Haskell version of it, but of course we cannot use plain lists:
+explain why and define a datatype (say DeepList) for it.
+2) Make DeepList an instance of Show, such that its representation is like that of Scheme.
+3) Implement fep.
+4) Make DeepList an instance of Functor.
+ 
+SOLUTION
 
+data DeepList a = Val a | DeepList [DeepList a] deriving Eq
 
+instance (Show a) => Show (DeepList a) where
+show (Val x) = " " ++ show x ++ " "
+show (DeepList ls) = "(" ++ (concatMap show ls) ++ ")"
 
+infixl 1 -++- -- concatenation
+(DeepList xs) -++- (DeepList ys) = DeepList (xs ++ ys)
 
+fep dl = fep' dl dl where
+fep' (DeepList []) z = z
+fep' (DeepList (x:xs)) z = (DeepList [x]) -++- DeepList [(fep' (DeepList xs) z)] -++- (DeepList [x])
+instance Functor DeepList where
 
+fmap f (Val a) = Val $ f a
+fmap f (DeepList xs) = DeepList $ map (\x -> let (Val y) = x in Val (f y)) xs

@@ -296,8 +296,16 @@ SOLUTION
 (define (multi-merge . data)
 	(foldl merge '() data))
 
+====2018.07.20===
+Give a purely functional definition of fep, which takes a list (x1 x2 ... xn) and returns (x1 (x2 (... (xn (x1 x2 ... xn) xn) xn-1) ...) x1).
 
-
-
-
-
+SOLUTION
+(define (fep L)
+	(foldr (lambda (el next) (list el L el)) L L) )
+	
+c1 1
+c2 4
+c1 2
+c2 4
+c2 8
+c2 8
