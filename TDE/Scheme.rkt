@@ -299,9 +299,6 @@ SOLUTION
 ====2018.07.20===
 Give a purely functional definition of fep, which takes a list (x1 x2 ... xn) and returns (x1 (x2 (... (xn (x1 x2 ... xn) xn) xn-1) ...) x1).
 
-====2019.01.16====
-Define a pure function f with a variable number of arguments, that, when called like (f x1 x2 .. xn), returns:
-(xn (xn-1 ( .. (x1 (xn xn-1 .. x1))..). Function f must be defined using only fold operations for loops.
 SOLUTION
 (define (fep L)
 	(foldr (lambda (el next) (list el L el)) L L) )
@@ -313,12 +310,16 @@ c2 4
 c2 8
 c2 8
 
+====2019.01.16====
+Define a pure function f with a variable number of arguments, that, when called like (f x1 x2 .. xn), returns:
+(xn (xn-1 ( .. (x1 (xn xn-1 .. x1))..). Function f must be defined using only fold operations for loops.
+
+
 SOLUTION
 (define (strg-fold.args)
 	(foldl (lambda (x y)
 			((list x y)))) (foldr (lambda (x y) 
 											(cons y x)) `() args) args))
-
 
 
 ====2018.09.05====
@@ -335,17 +336,201 @@ SOLUTION
 
 REAL SOLUTION
 (define (revlt l1 l2 l3)
-(let loop ((p1 l1)
-(p2 l2)
-(p3 l3)
-(out '()))
-(if (or (null? p1)(null? p2)(null? p3))
-out
-(let ((x1 (car p1))
-(x2 (car p2))
-(x3 (car p3)))
-(loop (cdr p1) (cdr p2) (cdr p3)
-(cons (vector x1 x2 x3) out))))))
+ (let loop ((p1 l1)
+  (p2 l2)
+  (p3 l3)
+  (out '()))
+ (if (or (null? p1)(null? p2)(null? p3))
+  out
+ (let ((x1 (car p1))
+  (x2 (car p2))
+  (x3 (car p3)))
+  (loop (cdr p1) (cdr p2) (cdr p3)
+  (cons (vector x1 x2 x3) out))))))
+
+
+====2018.07.06====
+1) Give a purely functional definition of deepen, which takes a list (x1 x2 ... xn) and returns ((... ((x1) x2) ...) xn).
+2) Write the construct define-with-return:, which takes a name m, used as a return function, a list function name + parameters, and
+a function body, and defines a function with the same characteristics, where calls to m are used to return a value.
+
+E.g. if we define
+(define-with-return: return (f x) ; note that the function name is f, while return is used, of course, for returning
+(define a 12)
+(return (+ x a))
+'unreachable),
+
+a call (f 3) should give 15
+
+
+
+SOLUTION
+(define (deepen L)
+	(foldl (lambda (elem lst)((list lst elem))) `(car L) (cdr L)))
+	
+
+(define-syntax define-with-return:
+	(syntax-rules ()
+		((_ return (fun p1 ...) e1 ...)
+			(define (fun p1 ...)
+				(call/cc (lambda (return)
+					e1 ...))))))
+
+
+
+
+====2018.01.16====
+Consider a procedure p that receives as input a list. Elements in the list are either numbers 
+or strings, together with the two special separators * and $.
+For instance, L = (* 1 2 3 * $ “hello” * 1 * 7 “my” * 1 2 * “world” $).
+Implement p as a tail recursive function that sums all the numbers found 
+between two occurrences of * symbols, and concatenates all the strings 
+between occurrences of $, then returns the list of the resulting elements. 
+Numbers and strings that are not between the correct pair of separators are discarded.
+
+E.g., in the case of L, the result should be (6 1 3 “hellomyworld”)
+
+(define (p L)
+	(cons (p_num L) (p_string L)))
+
+(define (p_string L)
+	(let ((concat_rslt `()))
+	(let loop (concat_rslt L) 
+		(if (eq (car L) `*) 
+			((let ((lst (cdr L))
+					(rslt `()))
+			(let loop2 (rslt lst) 
+				(cond
+					((string? (car lst)) (loop2 (cons rslt (car lst)) (cdr lst)))
+					((eq? (car lst) `*) (loop ((cons concat_rslt rslt) (cdr lst))))
+				(else
+					(loop2 (rslt (cdr lst)))))))))
+		(else (loop (concat_rslt (cdr L)))))
+	(concat_rslt)))
+	
+(define (p_num L)
+(let ((concat_rslt `()))
+(let loop (concat_rslt L) 
+	(if (eq (car L) `$) 
+		((let ((lst (cdr L))
+				(rslt `()))
+		(let loop2 (rslt lst) 
+			(cond
+				((number? (car lst)) (loop2 (+ rslt (car lst)) (cdr lst)))
+				((eq? (car lst) `$) (loop ((cons concat_rslt rslt) (cdr lst))))
+			(else
+				(loop2 (rslt (cdr lst)))))))))
+	(else (loop (concat_rslt (cdr L)))))
+(concat_rslt)))
+	
+		
+		
+VERA SOLUZIONE
+(define (p lst)
+ (define (loc-p ls res cint cstr)
+  (if (null? ls)
+   res
+  (let ((cur (car ls)))
+   (cond
+   ((eq? cur '*)
+    (if cint
+	 (loc-p (cdr ls) (append res (list cint)) #f cstr)
+	 (loc-p (cdr ls) res 0 cstr)))
+	((eq? cur '$)
+		(if cstr
+			(loc-p (cdr ls) (append res (list cstr)) cint #f)
+			(loc-p (cdr ls) res cint "")))
+		((and cint (number? cur))
+		 (loc-p (cdr ls) res (+ cur cint) cstr))
+		((and cstr (string? cur))
+		 (loc-p (cdr ls) res cint (string-append cstr cur)))
+		(else
+		 (loc-p (cdr ls) res cint cstr))
+		))))
+ (loc-p lst '() #f #f))
+		
+		
+
+====2017.09.01====
+Consider a list L of symbols. We want to check if in L there are matching “a” and “b” symbols or “1” and “2” symbols, where “a”
+and “1” have an open parenthesis role, while “b” and “2” stand for close parenthesis respectively (i.e. a Dyck language); other
+symbols are ignored. Define a pure and tail recursive function check-this which returns the number of matching pairs, and #f if the
+parenthesis structure is not respected.
+E.g.
+(check-this '(a b a b)) is 2
+(check-this '(h e l l o)) is 0
+(check-this '(6 h a b a 1 h h i 2 b z)) is 3
+(check-this '(6 h a b a 1 h h i b z 2)) is #f (wrong structure)	
+		
+SOLUTION
+(define (check-this ls)
+ (define (check-par in stack num)
+  (if (null? in)
+   num
+   (let ((x (car in))
+    (xs (cdr in)))
+     (cond
+      ((eq? x 'a)
+       (check-par xs (cons 'b stack) num))
+      ((eq? x '1)
+       (check-par xs (cons '2 stack) num))
+      ((member x '(2 b))
+       (if (and (cons? stack) (eq? x (car stack)))
+        (check-par xs (cdr stack) (+ num 1))
+        #f))
+      (else
+       (check-par xs stack num))))))
+ (check-par ls '() 0))
+		
+
+====2021.01.20====
+
+Define a pure function (i.e. without using procedures with side effects, such as set!) which takes a multi-level list, i.e. a list that may contain any level of lists, and converts it into a data structure where each list is converted into a vector. 
+
+E.g.
+The result of (multi-list->vector '(1 2 (3 4) (5 (6)) "hi" ((3) 4))))
+should be: '#(1 2 #(3 4) #(5 #(6)) "hi" #(#(3) 4))
+
+(define (multi-list->vector l)
+	(let ((rslt (vector `())))
+		(let loop (curr num lst)	
+		(cond
+			(eq? (car l) `( ) 
+				((let ((num (+ num 1))))
+					(loop (vector `()) 0 cdr l)))
+			(eq? (car l) `) ) 
+				(let ((num (- num 1)))
+				 if (eq? num 0)
+				  (rslt)
+					((set (rslt (vector v curr)))
+					 (loop (vector `()) 0 cdr l))
+		 (else
+			(loop (vector curr (car l)) num (cdr l)))))))
+			(multi-list-helper (vec))
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

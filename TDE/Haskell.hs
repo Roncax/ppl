@@ -442,7 +442,7 @@ instance Applicative Dupl where
 	pure x = Dupl [x] []
 	(Dupl f1 f2) <*> (Dupl x1 x2) = Dupl (f1 <*> x1) (f2 <*> x2)
 
-====2019.02.08====
+====2018.09.05====
 1) Consider the function fep of Exercise 1. We want to implement an Haskell version of it, but of course we cannot use plain lists:
 explain why and define a datatype (say DeepList) for it.
 2) Make DeepList an instance of Show, such that its representation is like that of Scheme.
@@ -463,7 +463,127 @@ infixl 1 -++- -- concatenation
 fep dl = fep' dl dl where
 fep' (DeepList []) z = z
 fep' (DeepList (x:xs)) z = (DeepList [x]) -++- DeepList [(fep' (DeepList xs) z)] -++- (DeepList [x])
-instance Functor DeepList where
 
+instance Functor DeepList where
 fmap f (Val a) = Val $ f a
 fmap f (DeepList xs) = DeepList $ map (\x -> let (Val y) = x in Val (f y)) xs
+
+
+====2018.07.06====
+Consider this datatype: data Blob a = Blob a (a -> a)
+Note: in this exercise, do not consider the practical meaning of Blob; the only constraint is to use all the available data, and the
+types must be right!
+
+E.g.
+instance Show a => Show (Blob a) where
+show (Blob x f) = "Blob " ++ (show (f x))
+
+1) Can Blob automatically derive Eq? Explain how, why, and, if the answer is negative, make it an instance of Eq.
+2) Make Blob an instance of the following classes: Functor, Foldable, and Applicative
+
+
+SOLUTION
+instance Eq a => Eq (Blob a) where
+Blob x f == Blob y g | (g y) == (f x) = True
+_ == _ = False
+
+instance Functor Blob where
+fmap f (Blob x g) = Blob (f (g x)) id
+
+instance Foldable Blob where
+foldr f z (Blob x g) = f (g x) z
+
+instance Applicative Blob where
+pure x = Blob x id
+(Blob fx fg) <*> (Blob x g) = Blob (((fg fx) . g) x) id
+
+
+
+====2018.02.05====
+1) Define a Graph data-type, for directed graphs. Nodes hold some generic data, while edges have no data associated.
+2) Define a graph_lookup function, to get the data associated with a node in the graph (or nothing if the node is not present).
+3) Define an adjacents function, to check if two nodes are adjacent or not.
+4) Make Graph an instance of Functor
+
+SOLUTION
+
+data Node a b = Node {
+id :: a,
+datum :: b,
+adjacent :: [a]
+} deriving Show
+
+data Graph a b = Graph [Node a b] deriving Show
+
+graph_lookup :: (Eq a) => Graph a b -> a -> Maybe (Node a b)
+graph_lookup id (Graph l) = (lookup_helper id l)
+lookup_helper id (Node id d a):xs | i == id = Just (Node id d a)
+								  | lookup_helper id xs
+lookup_helper _ [] = Nothing
+
+adjacents :: Eq a => Graph a b -> a -> a -> Bool
+adjacents g i j = case graph_lookup g i of
+						Nothing -> False
+					    Just (Node _ _ adj) -> j `elem` adj
+
+instance Functor (Node a) where
+ fmap f (Node a b l) = Node a (f b) l
+ 
+instance Functor (Graph a) where
+ fmap f (Graph l) = Graph (\x -> fmap f x) l
+
+
+
+====2018.01.16====
+Implement and state all the types of the following functions:
+1) Define a fixpoint operator, which takes a function f :: a -> a, and an initial value of type a, and returns its fixed point, i.e. a
+value x such that f(x) = x. E.g. fixpoint sqrt 12 should return 1.0.
+2) We want to use our fixpoint operator to sets of values, but we also want to implement sets as regular lists (not a good idea in
+practice). What kind of data declaration we need, if any? We need to make it an instance of standard classes? If the answer is yes,
+do it. If it is no, motivate your answer.
+3) Define setminus, intersection, and union for such sets.
+
+SOLUTION
+
+fixpoint :: Eq a => (a -> a) -> a -> a
+fixpoint f a | (f a) == a = a
+			 | True = (fixpoint f (f a))
+
+
+newType SetList a = SetList [a] deriving Show
+
+setminus :: Eq a => Lset a -> Lset a -> Lset a
+setminus (Lset x) (Lset y) = Lset [t | t <- x, not (elem t y)]
+
+intersection :: Eq a => Lset a -> Lset a -> Lset a
+intersection (Lset x) (Lset y) = Lset [t | t <- x, elem t y]
+
+union :: Lset a -> Lset a -> Lset a
+union (Lset x) (Lset y) = Lset $ x ++ y
+
+
+====2021.01.20====
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
