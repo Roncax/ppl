@@ -563,23 +563,123 @@ union (Lset x) (Lset y) = Lset $ x ++ y
 
 
 ====2021.01.20====
+Consider the following data structure for general binary trees:
+
+  data Tree a = Empty | Branch (Tree a) a (Tree a) deriving (Show, Eq)
+
+Using the State monad as seen in class:
+
+1) Define a monadic map for Tree, called mapTreeM.
+
+2) Use mapTreeM to define a function which takes a tree and returns a tree containing list of elements that are all the data found in the original tree in a depth-first visit.
+
+E.g.
+From the tree: (Branch (Branch Empty 1 Empty) 2 (Branch (Branch Empty 3 Empty) 4 Empty))
+we obtain:
+Branch (Branch Empty [1] Empty) [1,2] (Branch (Branch Empty [1,2,3] Empty) [1,2,3,4] Empty)
+
+
+SOLUTION
+mapTreeM :: Monad m => (t -> m a) -> Tree t -> m (Tree a)
+mapTreeM f Empty = return Empty
+mapTreeM f (Branch lhs v rhs) = do 
+                                   lhs' <- mapTreeM f lhs
+                                   v1 <- f v
+                                   rhs' <- mapTreeM f rhs
+                                   return (Branch lhs' v1 rhs')
+
+depth_tree t = let (State f) = mapTreeM
+                                (\v -> do cur <- getState
+                                          putState $ cur ++ [v]
+                                          getState)
+                                t
+               in snd $ f []
+
+
+====2017.07.20====
+1) Define a ternary tree data structure, called Ttree, in which every node contain both a value and a color, which can be either
+yellow or blue. You can assume that a tree cannot be empty.
+2) Make Ttree an instance of Functor.
+3) Make Ttree an instance of Foldable.
+4) Define a function yellowSubTrees, which returns a list containing all the maximal subtrees of a given Ttree that are all made of
+yellow nodes.
+
+SOLUTION
+
+data Ttree a = Branch a Color (Ttree a) (Ttree a) (Ttree a) | Ttree a c deriving (Eq, Show)
+data Color = blue | yellow 
+
+instance Show Color where
+show blue = "Blue"
+show yellow = "Yellow"
+
+
+instance Functor (Ttree a) where
+fmap f (Branch v c t1 t2 t3) = Branch (f a) c (fmap f t1) (fmap f t2) (fmap f t3)
+fmap f (Ttree v c) = Ttree (f v) c
+
+instance Foldable (Ttree a) where 
+foldr f i (Branch v c t1 t2 t3) = f (foldr f (foldr f (foldr f i t3) t2) t1) v
+foldr f i (Ttree v c) = f i v
+
+getYellow x@(Ttree Yellow _) = ([x], True)
+getYellow (Ttree Blue _) = ([], False)
+getYellow x@(Branch c _ l m r) =
+ let chs = [l, m, r]
+   ys = map getYellow chs
+ in if c == Yellow && (and $ map (\(x,y) -> y) ys)
+   then ([x], True)
+   else (concat $ filter (/= []) $ map fst ys, False)
+
+yellowSubtrees t = fst $ getYellow t
+
+
+====2021.02.08====
+A multi-valued map (Multimap) is a data structure that associates keys of a type k to zero or more values of type v.
+A Multimap can be represented as a list of 'Multinodes', as defined below. Each multinode contains a unique key and a non-empty list of values associated to it.
+
+data Multinode k v = Multinode { key :: k
+                               , values :: [v]
+                               }
+
+data Multimap k v = Multimap [Multinode k v]
+
+1) Implement the following functions that manipulate a Multimap:
+
+insert :: Eq k => k -> v -> Multimap k v -> Multimap k v
+insert key val m returns a new Multimap identical to m, except val is added to the values associated to k.
+
+lookup :: Eq k => k -> Multimap k v -> [v]
+lookup key m returns the list of values associated to key in m
+
+remove :: Eq v => v -> Multimap k v -> Multimap k v
+remove val m returns a new Multimap identical to m, but without all values equal to val
+
+2) Make Multimap k an instance of Functor.
+
+
+SOLUTION
+
+
+insert m val (Multimap x:xs) = Multimap (insert m val x):(insert m val xs)
+insert m val (Multinode k v) = Multinode m v:val   
+
+lookup m (Multimap x:xs)| lookup m x == false = lookup m xs
+						| lookup m x
+lookup m (Multimap []) = []						
+lookup m (Multinode k v)| m == k = v
+						| false
 
 
 
+remove val (Multimap x:xs) = Multimap (remove v x):(remove Multimap xs)
+remove val (Multinode k x:xs) | x == val = Multinode k (remove xs)
+							  | x == val = Multinode k x:(remove xs)
 
+remove val x:xs | x == val = (remove xs)
+				| x:(remove xs)
 
-
-
-
-
-
-
-
-
-
-
-
-
+remove val [] = [] 
 
 
 

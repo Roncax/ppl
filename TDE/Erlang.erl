@@ -339,27 +339,95 @@ fix(F, V) ->
 
 
 ====2021.01.20====
+Define a function for a proxy used to avoid to send PIDs; the proxy must react to the following messages:
+
+- {remember, PID, Name}: associate the value Name with PID.
+
+- {question, Name, Data}: send a question message containing Data to the PID corresponding to the value Name (e.g. an atom), like in PID ! {question, Data}
+
+- {answer, Name, Data}: send an answer message containing Data to the PID corresponding to the value Name (e.g. an atom), like in PID ! {answer, Data}
 
 
 
+SOLUTION
+proxy(Table) ->
+    receive
+        {question, Name, Data} ->
+            #{Name := Id} = Table,
+            Id ! {question, Data},
+            proxy(Table);
+        {answer, Name, Data} ->
+            #{Name := Id} = Table,
+            Id ! {answer, Data},
+            proxy(Table);
+        {remember, PID, Name} ->
+            proxy(Table#{Name => PID})
+    end.
 
 
 
+====2017.07.20====
+We want to define a “dynamic list” data structure, where each element of the list is an actor storing a value. Such value can be of
+course read and set, and each get/set operation on the list can be performed in parallel.
+1) Define create_dlist, which takes a number n and returns a dynamic list of length n. You can assume that each element store the
+value 0 at start.
+2) Define the function dlist_to_list, which takes a dynamic list and returns a list of the contained values.
+2) Define a map for dynamic list. Of course this operation has side effects, since it changes the content of the list.
 
 
+cell(Value) ->
+ receive
+  {set, V} ->
+   cell(V);
+  {get, Pid} ->
+   Pid ! Value,
+   cell(Value)
+ end.
+
+delement_get(Element) ->
+ Element ! {get, self()},
+  receive
+   V -> V
+  end.
+
+delement_set(Element, New) ->
+ Element ! {set, New}.
+
+create_dlist(0) -> [];
+create_dlist(Size) -> [spawn(?MODULE, cell, [0]) | create_dlist(Size-1)].
+
+dlist_map([], _) -> ok;
+dlist_map([X|Xs], Fun) ->
+ delement_set(X, Fun(delement_get(X))),
+ dlist_map(Xs, Fun).
 
 
+dlist_to_list([]) -> ok;
+dlist_to_list([X|Xs]) ->
+	X ! {get, self()}
+	receive ->
+		{V} -> V
+		dlist_to_list(Xs)
+	end.
+	
+
+====2021.02.08====
+Consider the apply operation (i.e.<*>) in Haskell's Applicative class.
+Define a parallel <*> for Erlang's lists
+
+concatMap(F:FS, LS) ->
+	if 
+	   F == [] -> ok;
+	 
+	else
+	   res = maps:F(LS),
+	   res = [res|concat(FS, LS)],
+	   res;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+mapList(F, L:LS) ->
+	if
+	 L == [] -> ok;
+	else
+	 res = [F(L)|mapList(F, LS)],
+	 res;
